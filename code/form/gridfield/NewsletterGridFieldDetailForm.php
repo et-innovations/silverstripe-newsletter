@@ -143,8 +143,6 @@ class NewsletterGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_Item
 
             //write once without validation
             Config::inst()->update('DataObject', 'validation_enabled', false);
-
-            Newsletter::set_validation_enabled(false);
             //save once to get the new Newsletter created so as to add to mailing list
             $newNewsletter->write($showDebug = false, $forceInsert = true);
             $origMailinglists = $origNewsletter->MailingLists();
