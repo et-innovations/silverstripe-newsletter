@@ -21,6 +21,14 @@ class NewsletterEmail extends Email
     private static $link_tracking_enabled = true;
 
     /**
+     * Should be the links in the content of the email
+     * be converted to absolute links.
+     *
+     * @var boolean
+     */
+    private static $convert_to_absolute_links = true;
+    
+    /**
      * @var string
      */
     protected static $static_base_url = null;
@@ -120,6 +128,17 @@ class NewsletterEmail extends Email
                     $text = str_ireplace(array_keys($replacements), array_values($replacements), $text);
                 }
             }
+
+            if ($this->config()->convert_to_absolute_links) {
+                // convert relative links (especially "assets") to absolute ones
+                $text = str_replace(' src="assets/', ' src="/assets/', $text);
+                $text = HTTP::absoluteURLs($text);
+                // add end-tags to img, br and hr for XHTML1.0
+                $text = preg_replace("@(<img.*?)(?<!/)>@i", "$1 />", $text);
+                $text = preg_replace("@(<br.*?)(?<!/)>@i", "$1 />", $text);
+                $text = preg_replace("@(<hr.*?)(?<!/)>@i", "$1 />", $text);
+            }
+
             // replace the body
             $output = new HTMLText();
             $output->setValue($text);
