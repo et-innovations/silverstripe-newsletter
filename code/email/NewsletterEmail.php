@@ -90,42 +90,28 @@ class NewsletterEmail extends Email
                 !$this->fakeRecipient &&
                 preg_match_all("/<a\s[^>]*href=\"([^\"]*)\"[^>]*>(.*)<\/a>/siU", $text, $matches)) {
                 if (isset($matches[1]) && ($links = $matches[1])) {
-                    $titles = (isset($matches[2])) ? $matches[2] : array();
-                    $id = (int) $this->newsletter->ID;
+                    $newsletterID = (int) $this->newsletter->ID;
 
-                    $replacements = array();
-                    $current = array();
-
-                    // workaround as we want to match the longest urls (/foo/bar/baz) before /foo/
-                    array_unique($links);
-
-                    $sorted = array_combine($links, array_map('strlen', $links));
-                    arsort($sorted);
-
-                    foreach ($sorted as $link => $length) {
+                    foreach ($links as $matchID => $link) {
                         $SQL_link = Convert::raw2sql($link);
 
+                        // check if the same link is used multiple times
                         $tracked = DataObject::get_one('Newsletter_TrackedLink',
-                                "\"NewsletterID\" = '". $id . "' AND \"Original\" = '". $SQL_link ."'");
+                                "\"NewsletterID\" = '". $newsletterID . "' AND \"Original\" = '". $SQL_link ."'");
 
                         if (!$tracked) {
                             // make one.
 
                             $tracked = new Newsletter_TrackedLink();
                             $tracked->Original = $link;
-                            $tracked->NewsletterID = $id;
+                            $tracked->NewsletterID = $newsletterID;
                             $tracked->write();
                         }
 
-                        // replace the link
-                        $replacements[$link] = $tracked->Link();
-
-                        // track that this link is still active
-                        $current[] = $tracked->ID;
+                        // replace the link, but keep the title
+                        $replacement = preg_replace('/' . preg_quote($matches[1][$matchID], '/') . '/', $tracked->Link(), $matches[0][$matchID], 1);
+                        $text = str_replace($matches[0][$matchID], $replacement, $text);
                     }
-
-                    // replace the strings
-                    $text = str_ireplace(array_keys($replacements), array_values($replacements), $text);
                 }
             }
 
