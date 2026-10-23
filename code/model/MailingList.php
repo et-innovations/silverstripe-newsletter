@@ -81,7 +81,7 @@ class MailingList extends DataObject
         ));
 
         $autocompelete->filters = array(
-            "Blacklisted" => false,
+            "Blacklisted" => 0,
         );
 
         $recipientsGrid = GridField::create(
